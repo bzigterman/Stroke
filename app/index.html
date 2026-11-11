@@ -14,7 +14,9 @@
       <section id="output" contenteditable="true" spellcheck="false"></section>
       <script type="text/javascript">
          typewriter.init();
-         desktopApp.init();
+         if (window.desktopApp && typeof window.desktopApp.init === 'function') {
+            window.desktopApp.init();
+         }
       </script>
    </body>
 </html>
