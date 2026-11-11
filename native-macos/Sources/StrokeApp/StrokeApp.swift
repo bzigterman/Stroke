@@ -173,6 +173,25 @@ final class EditorModel: ObservableObject {
 }
 
 final class StrikeTextView: NSTextView {
+    var maximumLineWidth: CGFloat = 0 {
+        didSet { updateTextContainerLayout() }
+    }
+
+    override func setFrameSize(_ newSize: NSSize) {
+        super.setFrameSize(newSize)
+        updateTextContainerLayout()
+    }
+
+    private func updateTextContainerLayout() {
+        guard maximumLineWidth > 0, let textContainer else { return }
+        let availableWidth = max(1, bounds.width)
+        let containerWidth = min(maximumLineWidth, availableWidth)
+        let sideInset = max(0, (availableWidth - containerWidth) / 2)
+        textContainer.widthTracksTextView = false
+        textContainer.containerSize = NSSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
+        textContainerInset = NSSize(width: sideInset, height: 38)
+    }
+
     func strikeSelection() {
         let range = selectedRange()
         guard range.location != NSNotFound, range.length > 0 else { return }
@@ -225,16 +244,18 @@ struct NativeEditor: NSViewRepresentable {
         textView.isAutomaticQuoteSubstitutionEnabled = false
         textView.isAutomaticDashSubstitutionEnabled = false
         textView.isAutomaticTextReplacementEnabled = false
-        textView.font = NSFont.monospacedSystemFont(ofSize: 15, weight: .regular)
+        let editorFont = NSFont.monospacedSystemFont(ofSize: 15, weight: .regular)
+        textView.font = editorFont
+        textView.maximumLineWidth = 80 * editorFont.maximumAdvancement.width
         textView.textColor = NSColor(calibratedRed: 0.13, green: 0.13, blue: 0.13, alpha: 1)
         textView.backgroundColor = .clear
         textView.drawsBackground = false
-        textView.textContainerInset = NSSize(width: 42, height: 38)
+        textView.textContainerInset = NSSize(width: 0, height: 38)
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
-        textView.textContainer?.widthTracksTextView = true
-        textView.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
+        textView.textContainer?.widthTracksTextView = false
+        textView.textContainer?.containerSize = NSSize(width: textView.maximumLineWidth, height: CGFloat.greatestFiniteMagnitude)
         scrollView.documentView = textView
         model.attach(textView)
 
@@ -262,13 +283,8 @@ struct EditorWindow: View {
     @StateObject private var model = EditorModel()
     @Environment(\.openWindow) private var openWindow
 
-    private var maximumEditorWidth: CGFloat {
-        80 * NSFont.monospacedSystemFont(ofSize: 15, weight: .regular).maximumAdvancement.width + 84
-    }
-
     var body: some View {
         NativeEditor(model: model)
-            .frame(maxWidth: maximumEditorWidth)
             .frame(minWidth: 480, minHeight: 420)
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.white)
