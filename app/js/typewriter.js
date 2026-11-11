@@ -3,16 +3,16 @@ var typewriter = (function () {
    function init () {
 
       // Loads the desktop app's features if possible
-      if (inDesktop()) {desktopApp.init()};
+      if (inDesktop()) {window.desktopApp.init()};
 
       // #Input is used to capture text input, is hidden from user
       var input = document.getElementById('input');
-          input.onkeydown = inputKeyDown;      
+          input.onkeydown = inputKeyDown;
           input.onpaste = input.oncut = function(e) {return false};
-      
+
       // #Output is used to render #Input's value
       var output = document.getElementById('output');
-          output.onkeydown = outputKeyDown;      
+          output.onkeydown = outputKeyDown;
           output.oncut = output.onpaste = function(e) {return false};
 
       // Keep focus on input unless the user has selected text
@@ -25,8 +25,8 @@ var typewriter = (function () {
       if (isEmpty()) {setContents('<p>&#xfeff;</p>')};
    };
 
-   function inputKeyDown (e) {      
-      
+   function inputKeyDown (e) {
+
       var keyCode = e.which;
 
       // Disable delete
@@ -47,7 +47,7 @@ var typewriter = (function () {
          if (keyCode === 82 && !inDesktop()) {return};
 
       };
-      
+
       // Arrow keys
       if (isArrowKey(keyCode)) {
 
@@ -55,7 +55,7 @@ var typewriter = (function () {
          // the arrow keys. Soo, if the user is holding shift and presses any
          // arrow key except the right key then we set the focus on #output.
          if (e.shiftKey && keyCode !== 39) {
-            return setFocus(output); 
+            return setFocus(output);
          };
 
          // Otherwise we need to stop the arrow keys from moving the caret since
@@ -68,7 +68,7 @@ var typewriter = (function () {
 
          // In order to set focus correctly on a content editable div,
          // we add a zero-width character inside the new p.
-         input.innerHTML += '<p>&#xfeff;</p>'; 
+         input.innerHTML += '<p>&#xfeff;</p>';
          e.preventDefault();
       };
 
@@ -83,18 +83,18 @@ var typewriter = (function () {
       // The timeout allows us to acces the new and updated contents
       // of input.innerHTML without needing to wait til input.onkeyup
       return setTimeout(function(){
-         
+
          setHTMLof(output).to(input);
          setFocus(input);
 
          // Ensures caret is always in view
-         return moveViewportToBottom(); 
+         return moveViewportToBottom();
       }, 0);
 
    };
 
-   function outputKeyDown (e) {      
-      
+   function outputKeyDown (e) {
+
       var keyCode = e.which;
 
       // Delete key
@@ -109,15 +109,15 @@ var typewriter = (function () {
          // Update input to include the newly struck out text
          setHTMLof(input).to(output);
 
-         return setFocus(input);                  
+         return setFocus(input);
       };
 
       // Shift key
       if (e.shiftKey) {
-         
+
          // allow default since shift is used to modify selection
          if (isArrowKey(keyCode) || keyCode === 16) {
-            return            
+            return
          };
       };
 
@@ -128,7 +128,7 @@ var typewriter = (function () {
 
       // But disable everything else
       e.preventDefault();
-      return setFocus(input);         
+      return setFocus(input);
    };
 
    // Takes the user's current text selection and strike it out
@@ -138,19 +138,19 @@ var typewriter = (function () {
       var range = selectedText.getRangeAt();
 
       if (rangeHasNonTextNodes(range)) {
-         
+
          // Since the selected text range contains non-text-nodes
          // we can't wrap it using range.surroundContents
 
          // Therefore we extract all the text nodes inside
          // the selected text range then surround them individually
-         
+
          var textNodeRanges = extractTextNodes(range);
-         
+
          for (var i in textNodeRanges) {
             surround(textNodeRanges[i]);
          };
-         
+
       } else {
          surround(range);
       };
@@ -159,7 +159,7 @@ var typewriter = (function () {
       // then wraps them in a span tag
 
       function surround (range) {
-         
+
          var strike = document.createElement('span');
              strike.className = 'strike';
 
@@ -171,7 +171,7 @@ var typewriter = (function () {
 
          // Adds empty span after strike
          range.collapse(false);
-         range.insertNode(emptySpan);         
+         range.insertNode(emptySpan);
       };
    };
 
@@ -193,7 +193,7 @@ var typewriter = (function () {
          },
          false
       );
-            
+
       while (treeWalker.nextNode()) {
 
          var textNode = treeWalker.currentNode,
@@ -208,7 +208,7 @@ var typewriter = (function () {
 
          else if (textNode.isSameNode(range.endContainer)) {
             subRange.setEnd(textNode, range.endOffset);
-         } 
+         }
 
          subRanges.push(subRange);
 
@@ -229,7 +229,7 @@ var typewriter = (function () {
    };
 
    function enableCaret () {
-      output.setAttribute('class', '');      
+      output.setAttribute('class', '');
       setFocus(input);
    };
 
@@ -250,7 +250,7 @@ var typewriter = (function () {
    function setHTMLof (oldNode) {
       return {
          to: function(newNode) {
-            return oldNode.innerHTML = newNode.innerHTML            
+            return oldNode.innerHTML = newNode.innerHTML
          }
       }
    };
@@ -261,7 +261,7 @@ var typewriter = (function () {
    };
 
    function inDesktop () {
-      return typeof require !== 'undefined';
+      return !!(window && window.desktopApp && typeof window.desktopApp.init === 'function');
    };
 
    function isArrowKey (keyCode) {
@@ -285,11 +285,11 @@ var typewriter = (function () {
 
    // Used to move caret to end of contenteditable div
    function setFocus (el) {
-            
+
       var range = document.createRange();
           range.selectNodeContents(el);
           range.collapse(false); // false collapses the range to its endpoint
-      
+
       var selection = window.getSelection();
           selection.removeAllRanges(); // clear existing user selection
           selection.addRange(range);
