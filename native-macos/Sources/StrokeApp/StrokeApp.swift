@@ -273,6 +273,12 @@ struct StrokeApp: App {
                 Button("Open…") { EditorModel.activeModel?.openDocument() }
                     .keyboardShortcut("o", modifiers: .command)
             }
+            CommandGroup(after: .newItem) {
+                Button("Close Window") {
+                    NSApp.keyWindow?.performClose(nil)
+                }
+                .keyboardShortcut("w", modifiers: .command)
+            }
             CommandGroup(replacing: .saveItem) {
                 Button("Save") { EditorModel.activeModel?.saveDocument() }
                     .keyboardShortcut("s", modifiers: .command)
