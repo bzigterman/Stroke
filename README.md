@@ -1,25 +1,28 @@
 # Stroke
 
-Stroke is a text editor for first drafts. The desktop app now uses Electron instead of the discontinued NW.js runtime, so it can be built and run on current macOS releases (including Apple silicon and Intel Macs).
+Stroke is a simple first-draft text editor. The native macOS app is built with SwiftUI and AppKit: it presents a plain text editor, never deletes selected text, and marks a selection with strikethrough when you press Backspace/Delete. Saving writes plain text with struck-through text omitted.
 
-## Run from source
+## Build and run the native macOS app
 
-Install a current Node.js LTS release, then from the repository root run:
-
-```sh
-npm install
-npm start
-```
-
-## Build the macOS app
-
-Run this on macOS with Xcode Command Line Tools installed:
+Requires macOS 13 or later and Xcode or the Xcode Command Line Tools with Swift installed. From the repository root:
 
 ```sh
-npm install
-npm run dist:mac
+chmod +x native-macos/build-app.sh
+./native-macos/build-app.sh
+open release/Stroke.app
 ```
 
-The build produces a universal macOS app in both `.dmg` and `.zip` formats under `release/`, supporting Apple silicon and Intel Macs. Electron and electron-builder are resolved to their latest npm releases when installing. Unsigned builds may require opening the app via Finder's Open command; distribution outside personal use should be signed and notarized with an Apple Developer ID.
+The script builds for the architecture of the Mac running it. On Apple silicon, the resulting app is arm64 and runs natively without Rosetta. To install, drag `release/Stroke.app` into Applications.
 
-The old browser-based public demo is separate from the desktop app. The desktop build loads its local files and does not depend on the legacy hosted app or application cache.
+## Editor behavior
+
+- Type and select text as in a basic text editor.
+- Backspace or Delete with a selection strikes that text through; with no selection, they do nothing.
+- Typing or pasting over selected text strikes the old text and inserts the new text after it rather than replacing it.
+- Cut does not remove text.
+- Open, Save, Save As, and New are available in the macOS File menu with standard Command shortcuts.
+- Documents are saved as plain UTF-8 text with struck-through passages left out.
+
+## Electron version
+
+The repository also retains the earlier Electron implementation and browser demo. The native SwiftUI/AppKit build above is the recommended macOS app.
