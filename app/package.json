@@ -1,11 +1,6 @@
 {
-  "name": "Typewriter",
-  "version": "1.0.0",
-  "main": "index.html",
-  "no-edit-menu": true,
-  "window": {
-    "frame": true,
-    "toolbar": true,
-    "show": false
-  }
+  "name": "stroke-renderer",
+  "version": "1.1.2",
+  "private": true,
+  "description": "Renderer assets for the Stroke Electron application"
 }

@@ -24,7 +24,7 @@ function createWindow() {
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
-  mainWindow.loadFile(path.join(__dirname, '..', 'app', 'index.html'));
+  mainWindow.loadFile(path.join(app.getAppPath(), 'app', 'index.html'));
 }
 
 function sendCommand(command) {
@@ -86,7 +86,7 @@ ipcMain.handle('stroke:save', async (_event, filePath, text) => {
     const result = await dialog.showSaveDialog(mainWindow, {
       defaultPath: 'Untitled.txt',
       filters: [{ name: 'Text documents', extensions: ['txt'] }]
-    });
+n    });
     if (result.canceled || !result.filePath) return null;
     destination = result.filePath;
   }

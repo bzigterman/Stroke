@@ -1,7 +1,7 @@
 {
   "name": "stroke",
   "productName": "Stroke",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A text editor for first drafts",
   "repository": {
     "type": "git",
@@ -21,13 +21,17 @@
   "build": {
     "appId": "li.llllll.stroke",
     "productName": "Stroke",
+    "extraMetadata": {
+      "main": "electron/main.js"
+    },
     "directories": {
       "output": "release"
     },
     "files": [
       "app/**/*",
       "electron/**/*",
-      "package.json"
+      "package.json",
+      "!app/package.json"
     ],
     "mac": {
       "icon": "app/app.icns",
