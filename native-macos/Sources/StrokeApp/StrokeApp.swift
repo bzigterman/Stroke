@@ -102,7 +102,7 @@ final class EditorModel: ObservableObject {
             let panel = NSSavePanel()
             panel.allowedContentTypes = [.plainText]
             panel.canCreateDirectories = true
-            panel.nameFieldStringValue = currentFileURL?.lastPathComponent ?? "Untitled.txt"
+            panel.nameFieldStringValue = currentFileURL?.lastPathComponent ?? suggestedFileName(from: textView.string)
             guard panel.runModal() == .OK, let url = panel.url else { return }
             currentFileURL = url
         }
@@ -115,6 +115,17 @@ final class EditorModel: ObservableObject {
         } catch {
             showError("Could not save the document", error: error)
         }
+    }
+
+    private func suggestedFileName(from text: String) -> String {
+        let firstLine = text.components(separatedBy: .newlines).first ?? ""
+        let words = firstLine.split(whereSeparator: { $0.isWhitespace })
+        let title = words.prefix(5).joined(separator: " ")
+            .replacingOccurrences(of: "/", with: "-")
+            .replacingOccurrences(of: ":", with: "-")
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !title.isEmpty else { return "Untitled.txt" }
+        return (title as NSString).pathExtension.lowercased() == "txt" ? title : "\(title).txt"
     }
 
     func refreshTitle(markEdited: Bool = false) {
