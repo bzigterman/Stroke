@@ -5,11 +5,13 @@ import SwiftUI
 final class EditorModel: ObservableObject {
     weak var textView: StrikeTextView?
     private var currentFileURL: URL?
+    private var isEdited = false
 
     func newDocument() {
         textView?.textStorage?.setAttributedString(NSAttributedString(string: ""))
         textView?.setSelectedRange(NSRange(location: 0, length: 0))
         currentFileURL = nil
+        isEdited = false
         refreshTitle()
         textView?.window?.makeFirstResponder(textView)
     }
@@ -27,6 +29,7 @@ final class EditorModel: ObservableObject {
             textView?.textStorage?.setAttributedString(NSAttributedString(string: contents))
             textView?.setSelectedRange(NSRange(location: 0, length: 0))
             currentFileURL = url
+            isEdited = false
             refreshTitle()
             textView?.window?.makeFirstResponder(textView)
         } catch {
@@ -48,16 +51,22 @@ final class EditorModel: ObservableObject {
         guard let url = currentFileURL else { return }
         do {
             try plainTextWithoutStrikes(from: textView.attributedString()).write(to: url, atomically: true, encoding: .utf8)
+            isEdited = false
             refreshTitle()
         } catch {
             showError("Could not save the document", error: error)
         }
     }
 
-    func refreshTitle() {
+    func refreshTitle(markEdited: Bool = false) {
+        if markEdited {
+            isEdited = true
+        }
         let baseName = currentFileURL?.lastPathComponent ?? "Untitled"
         let wordCount = wordCount(in: textView?.string ?? "")
-        textView?.window?.title = "\(baseName) — \(wordCount) words"
+        let editMarker = isEdited ? " — Edited" : ""
+        textView?.window?.title = "\(baseName) — \(wordCount) words\(editMarker)"
+        textView?.window?.isDocumentEdited = isEdited
     }
 
     private func wordCount(in text: String) -> Int {
@@ -156,7 +165,9 @@ struct NativeEditor: NSViewRepresentable {
             object: textView,
             queue: .main
         ) { [weak model] _ in
-            model?.refreshTitle()
+            Task { @MainActor in
+                model?.refreshTitle(markEdited: true)
+            }
         }
 
         DispatchQueue.main.async {
