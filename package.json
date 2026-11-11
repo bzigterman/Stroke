@@ -1,48 +1,8 @@
 {
-  "name": "stroke",
+  "name": "stroke-native",
   "productName": "Stroke",
-  "version": "1.1.5",
-  "description": "A text editor for first drafts",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/bzigterman/Stroke.git"
-  },
-  "main": "main.js",
-  "license": "MIT",
-  "scripts": {
-    "start": "electron .",
-    "dist:mac": "electron-builder --mac --arm64",
-    "dist:mac:universal": "electron-builder --mac --universal"
-  },
-  "devDependencies": {
-    "electron": "latest",
-    "electron-builder": "latest"
-  },
-  "build": {
-    "appId": "li.llllll.stroke",
-    "productName": "Stroke",
-    "extraMetadata": {
-      "main": "main.js"
-    },
-    "directories": {
-      "app": ".",
-      "output": "release"
-    },
-    "files": [
-      "main.js",
-      "preload.js",
-      "electron/**/*",
-      "app/**/*",
-      "package.json",
-      "!app/package.json"
-    ],
-    "mac": {
-      "icon": "app/app.icns",
-      "target": [
-        "dmg",
-        "zip"
-      ],
-      "category": "public.app-category.productivity"
-    }
-  }
+  "version": "2.0.0",
+  "private": true,
+  "description": "Native SwiftUI and AppKit macOS text editor",
+  "license": "MIT"
 }

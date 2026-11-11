@@ -4,7 +4,11 @@
 /dist/*
 /node_modules/*
 
-# Droid Sans Mono is not public domain
+# Swift Package Manager build products
+/native-macos/.build/
+/native-macos/.swiftpm/
+
+# Legacy font excluded from the native app
 /app/DroidSansMono.ttf
 
 public/download/Typewriter.zip
