@@ -3,17 +3,38 @@ import SwiftUI
 
 @MainActor
 final class EditorModel: ObservableObject {
+    static weak var activeModel: EditorModel?
+
     weak var textView: StrikeTextView?
     private var currentFileURL: URL?
     private var isEdited = false
+    private var windowObserver: NSObjectProtocol?
+    private var pendingURL: URL?
+
+    init(documentURL: URL? = nil) {
+        pendingURL = documentURL
+    }
+
+    func attach(_ textView: StrikeTextView) {
+        self.textView = textView
+        if let pendingURL {
+            self.pendingURL = nil
+            loadDocument(at: pendingURL)
+        } else {
+            refreshTitle()
+        }
+
+        DispatchQueue.main.async { [weak self, weak textView] in
+            guard let self, let textView, let window = textView.window else { return }
+            window.makeFirstResponder(textView)
+            self.observeActivation(of: window)
+            Self.activeModel = self
+            self.refreshTitle()
+        }
+    }
 
     func newDocument() {
-        textView?.textStorage?.setAttributedString(NSAttributedString(string: ""))
-        textView?.setSelectedRange(NSRange(location: 0, length: 0))
-        currentFileURL = nil
-        isEdited = false
-        refreshTitle()
-        textView?.window?.makeFirstResponder(textView)
+        Self.showWindow()
     }
 
     func openDocument() {
@@ -22,25 +43,60 @@ final class EditorModel: ObservableObject {
         panel.allowsOtherFileTypes = true
         panel.canChooseDirectories = false
         panel.canChooseFiles = true
-        guard panel.runModal() == .OK, let url = panel.url else { return }
+        panel.allowsMultipleSelection = true
+        guard panel.runModal() == .OK else { return }
 
+        for url in panel.urls {
+            Self.showWindow(for: url)
+        }
+    }
+
+    private func loadDocument(at url: URL) {
         do {
             let contents = try String(contentsOf: url, encoding: .utf8)
-            let font = editorFont
             let attributes: [NSAttributedString.Key: Any] = [
-                .font: font,
-                .foregroundColor: NSColor(calibratedRed: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+                .font: editorFont,
+                .foregroundColor: editorTextColor
             ]
             textView?.textStorage?.setAttributedString(NSAttributedString(string: contents, attributes: attributes))
-            textView?.font = font
+            textView?.font = editorFont
             textView?.typingAttributes = attributes
             textView?.setSelectedRange(NSRange(location: 0, length: 0))
             currentFileURL = url
             isEdited = false
             refreshTitle()
-            textView?.window?.makeFirstResponder(textView)
         } catch {
             showError("Could not open the document", error: error)
+        }
+    }
+
+    private static func showWindow(for url: URL? = nil) {
+        let model = EditorModel(documentURL: url)
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 720, height: 620),
+            styleMask: [.titled, .closable, .miniaturizable, .resizable],
+            backing: .buffered,
+            defer: false
+        )
+        window.minSize = NSSize(width: 480, height: 420)
+        window.center()
+        window.contentViewController = NSHostingController(rootView: EditorWindow(model: model))
+        window.makeKeyAndOrderFront(nil)
+    }
+
+    private func observeActivation(of window: NSWindow) {
+        if let windowObserver {
+            NotificationCenter.default.removeObserver(windowObserver)
+        }
+        windowObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didBecomeKeyNotification,
+            object: window,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                guard let self else { return }
+                Self.activeModel = self
+            }
         }
     }
 
@@ -78,6 +134,10 @@ final class EditorModel: ObservableObject {
 
     private var editorFont: NSFont {
         NSFont.monospacedSystemFont(ofSize: 15, weight: .regular)
+    }
+
+    private var editorTextColor: NSColor {
+        NSColor(calibratedRed: 0.13, green: 0.13, blue: 0.13, alpha: 1)
     }
 
     private func wordCount(in text: String) -> Int {
@@ -169,7 +229,7 @@ struct NativeEditor: NSViewRepresentable {
         textView.textContainer?.widthTracksTextView = true
         textView.textContainer?.containerSize = NSSize(width: 0, height: CGFloat.greatestFiniteMagnitude)
         scrollView.documentView = textView
-        model.textView = textView
+        model.attach(textView)
 
         NotificationCenter.default.addObserver(
             forName: NSText.didChangeNotification,
@@ -179,11 +239,6 @@ struct NativeEditor: NSViewRepresentable {
             Task { @MainActor in
                 model?.refreshTitle(markEdited: true)
             }
-        }
-
-        DispatchQueue.main.async {
-            textView.window?.makeFirstResponder(textView)
-            model.refreshTitle()
         }
         return scrollView
     }
@@ -207,23 +262,21 @@ struct EditorWindow: View {
 
 @main
 struct StrokeApp: App {
-    @StateObject private var model = EditorModel()
-
     var body: some Scene {
         WindowGroup("Stroke") {
-            EditorWindow(model: model)
+            EditorWindow(model: EditorModel())
         }
         .commands {
             CommandGroup(replacing: .newItem) {
-                Button("New") { model.newDocument() }
+                Button("New") { EditorModel.activeModel?.newDocument() }
                     .keyboardShortcut("n", modifiers: .command)
-                Button("Open…") { model.openDocument() }
+                Button("Open…") { EditorModel.activeModel?.openDocument() }
                     .keyboardShortcut("o", modifiers: .command)
             }
             CommandGroup(replacing: .saveItem) {
-                Button("Save") { model.saveDocument() }
+                Button("Save") { EditorModel.activeModel?.saveDocument() }
                     .keyboardShortcut("s", modifiers: .command)
-                Button("Save As…") { model.saveDocument(saveAs: true) }
+                Button("Save As…") { EditorModel.activeModel?.saveDocument(saveAs: true) }
                     .keyboardShortcut("s", modifiers: [.command, .shift])
             }
         }
