@@ -1,6 +1,16 @@
 import AppKit
 import SwiftUI
 
+struct DocumentRequest: Hashable, Codable, Identifiable {
+    let id: UUID
+    let fileURL: URL?
+
+    init(fileURL: URL? = nil) {
+        id = UUID()
+        self.fileURL = fileURL
+    }
+}
+
 @MainActor
 final class EditorModel: ObservableObject {
     static weak var activeModel: EditorModel?
@@ -9,20 +19,11 @@ final class EditorModel: ObservableObject {
     private var currentFileURL: URL?
     private var isEdited = false
     private var windowObserver: NSObjectProtocol?
-    private var pendingURL: URL?
-
-    init(documentURL: URL? = nil) {
-        pendingURL = documentURL
-    }
+    var openWindow: ((URL?) -> Void)?
 
     func attach(_ textView: StrikeTextView) {
         self.textView = textView
-        if let pendingURL {
-            self.pendingURL = nil
-            loadDocument(at: pendingURL)
-        } else {
-            refreshTitle()
-        }
+        refreshTitle()
 
         DispatchQueue.main.async { [weak self, weak textView] in
             guard let self, let textView, let window = textView.window else { return }
@@ -34,7 +35,7 @@ final class EditorModel: ObservableObject {
     }
 
     func newDocument() {
-        Self.showWindow()
+        openWindow?(nil)
     }
 
     func openDocument() {
@@ -47,11 +48,20 @@ final class EditorModel: ObservableObject {
         guard panel.runModal() == .OK else { return }
 
         for url in panel.urls {
-            Self.showWindow(for: url)
+            openWindow?(url)
         }
     }
 
-    private func loadDocument(at url: URL) {
+    func loadDocument(at url: URL?) {
+        guard let url else {
+            currentFileURL = nil
+            isEdited = false
+            textView?.textStorage?.setAttributedString(NSAttributedString(string: ""))
+            textView?.setSelectedRange(NSRange(location: 0, length: 0))
+            refreshTitle()
+            return
+        }
+
         do {
             let contents = try String(contentsOf: url, encoding: .utf8)
             let attributes: [NSAttributedString.Key: Any] = [
@@ -68,20 +78,6 @@ final class EditorModel: ObservableObject {
         } catch {
             showError("Could not open the document", error: error)
         }
-    }
-
-    private static func showWindow(for url: URL? = nil) {
-        let model = EditorModel(documentURL: url)
-        let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 720, height: 620),
-            styleMask: [.titled, .closable, .miniaturizable, .resizable],
-            backing: .buffered,
-            defer: false
-        )
-        window.minSize = NSSize(width: 480, height: 420)
-        window.center()
-        window.contentViewController = NSHostingController(rootView: EditorWindow(model: model))
-        window.makeKeyAndOrderFront(nil)
     }
 
     private func observeActivation(of window: NSWindow) {
@@ -251,20 +247,34 @@ struct NativeEditor: NSViewRepresentable {
 }
 
 struct EditorWindow: View {
-    @ObservedObject var model: EditorModel
+    @Binding var request: DocumentRequest?
+    @StateObject private var model = EditorModel()
+    @Environment(\.openWindow) private var openWindow
 
     var body: some View {
         NativeEditor(model: model)
             .frame(minWidth: 480, minHeight: 420)
             .background(Color.white)
+            .onAppear {
+                model.openWindow = { url in
+                    openWindow(id: "editor", value: DocumentRequest(fileURL: url))
+                }
+                if let request {
+                    model.loadDocument(at: request.fileURL)
+                }
+            }
+            .onChange(of: request) { newRequest in
+                guard let newRequest else { return }
+                model.loadDocument(at: newRequest.fileURL)
+            }
     }
 }
 
 @main
 struct StrokeApp: App {
     var body: some Scene {
-        WindowGroup("Stroke") {
-            EditorWindow(model: EditorModel())
+        WindowGroup("Stroke", id: "editor", for: DocumentRequest.self) { $request in
+            EditorWindow(request: $request)
         }
         .commands {
             CommandGroup(replacing: .newItem) {
