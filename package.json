@@ -1,13 +1,36 @@
 {
-  "name": "Typewriter",
-  "version": "1.0.0",
+  "name": "stroke",
+  "productName": "Stroke",
+  "version": "1.1.0",
   "description": "A text editor for first drafts",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/davidmerfield/Typewriter.git"
+  "main": "electron/main.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist:mac": "electron-builder --mac --universal"
   },
   "devDependencies": {
-    "grunt": "^0.4.4",
-    "grunt-node-webkit-builder": "^0.1.20"
+    "electron": "latest",
+    "electron-builder": "latest"
+  },
+  "build": {
+    "appId": "li.llllll.stroke",
+    "productName": "Stroke",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "app/**/*",
+      "electron/**/*",
+      "package.json"
+    ],
+    "mac": {
+      "icon": "app/app.icns",
+      "target": [
+        "dmg",
+        "zip"
+      ],
+      "category": "public.app-category.productivity"
+    }
   }
 }

@@ -1,7 +1,10 @@
+# Build outputs
 /builds/*
+/release/*
+/dist/*
 /node_modules/*
 
-# Droid sans is not public domain
+# Droid Sans Mono is not public domain
 /app/DroidSansMono.ttf
 
 public/download/Typewriter.zip

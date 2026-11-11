@@ -2,16 +2,19 @@
 <html>
    <head>
       <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
       <script type="text/javascript" src="./js/typewriter.js"></script>
       <script type="text/javascript" src="./js/app.js"></script>
       <style type="text/css">@font-face {font-family: 'Droid Sans Mono';src: url('./DroidSansMono.ttf');}</style>
       <link rel="stylesheet" href="./css/style.css">
+      <title>Stroke</title>
    </head>
    <body>
-      <section id="input" contenteditable="true"></section>  
+      <section id="input" contenteditable="true"></section>
       <section id="output" contenteditable="true" spellcheck="false"></section>
-      <input type="file" id="saveFile" nwsaveas="~/Untitled" accept=".txt" />
-      <input type="file" id="readFile" accept=".txt"/>  
-      <script type="text/javascript">typewriter.init();</script>
+      <script type="text/javascript">
+         typewriter.init();
+         desktopApp.init();
+      </script>
    </body>
 </html>
