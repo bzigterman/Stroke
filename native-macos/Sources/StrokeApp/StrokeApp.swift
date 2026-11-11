@@ -189,7 +189,7 @@ final class StrikeTextView: NSTextView {
         let sideInset = max(0, (availableWidth - containerWidth) / 2)
         textContainer.widthTracksTextView = false
         textContainer.containerSize = NSSize(width: containerWidth, height: CGFloat.greatestFiniteMagnitude)
-        textContainerInset = NSSize(width: sideInset, height: 38)
+        textContainerInset = NSSize(width: sideInset, height: 0)
     }
 
     func strikeSelection() {
@@ -250,7 +250,7 @@ struct NativeEditor: NSViewRepresentable {
         textView.textColor = NSColor(calibratedRed: 0.13, green: 0.13, blue: 0.13, alpha: 1)
         textView.backgroundColor = .clear
         textView.drawsBackground = false
-        textView.textContainerInset = NSSize(width: 0, height: 38)
+        textView.textContainerInset = NSSize(width: 0, height: 0)
         textView.isVerticallyResizable = true
         textView.isHorizontallyResizable = false
         textView.autoresizingMask = [.width]
