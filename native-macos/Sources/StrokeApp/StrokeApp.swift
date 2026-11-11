@@ -10,7 +10,7 @@ final class EditorModel: ObservableObject {
         textView?.textStorage?.setAttributedString(NSAttributedString(string: ""))
         textView?.setSelectedRange(NSRange(location: 0, length: 0))
         currentFileURL = nil
-        textView?.window?.title = "Untitled — Stroke"
+        refreshTitle()
         textView?.window?.makeFirstResponder(textView)
     }
 
@@ -27,7 +27,7 @@ final class EditorModel: ObservableObject {
             textView?.textStorage?.setAttributedString(NSAttributedString(string: contents))
             textView?.setSelectedRange(NSRange(location: 0, length: 0))
             currentFileURL = url
-            textView?.window?.title = "\(url.lastPathComponent) — Stroke"
+            refreshTitle()
             textView?.window?.makeFirstResponder(textView)
         } catch {
             showError("Could not open the document", error: error)
@@ -48,10 +48,20 @@ final class EditorModel: ObservableObject {
         guard let url = currentFileURL else { return }
         do {
             try plainTextWithoutStrikes(from: textView.attributedString()).write(to: url, atomically: true, encoding: .utf8)
-            textView.window?.title = "\(url.lastPathComponent) — Stroke"
+            refreshTitle()
         } catch {
             showError("Could not save the document", error: error)
         }
+    }
+
+    func refreshTitle() {
+        let baseName = currentFileURL?.lastPathComponent ?? "Untitled"
+        let wordCount = wordCount(in: textView?.string ?? "")
+        textView?.window?.title = "\(baseName) — \(wordCount) words"
+    }
+
+    private func wordCount(in text: String) -> Int {
+        text.split(whereSeparator: { $0.isWhitespace || $0.isNewline }).count
     }
 
     private func plainTextWithoutStrikes(from contents: NSAttributedString) -> String {
@@ -141,8 +151,17 @@ struct NativeEditor: NSViewRepresentable {
         scrollView.documentView = textView
         model.textView = textView
 
+        NotificationCenter.default.addObserver(
+            forName: NSText.didChangeNotification,
+            object: textView,
+            queue: .main
+        ) { [weak model] _ in
+            model?.refreshTitle()
+        }
+
         DispatchQueue.main.async {
             textView.window?.makeFirstResponder(textView)
+            model.refreshTitle()
         }
         return scrollView
     }
