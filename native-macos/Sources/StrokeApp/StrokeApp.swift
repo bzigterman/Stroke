@@ -262,9 +262,15 @@ struct EditorWindow: View {
     @StateObject private var model = EditorModel()
     @Environment(\.openWindow) private var openWindow
 
+    private var maximumEditorWidth: CGFloat {
+        80 * NSFont.monospacedSystemFont(ofSize: 15, weight: .regular).maximumAdvancement.width + 84
+    }
+
     var body: some View {
         NativeEditor(model: model)
+            .frame(maxWidth: maximumEditorWidth)
             .frame(minWidth: 480, minHeight: 420)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
             .background(Color.white)
             .onAppear {
                 model.openWindow = { url in
