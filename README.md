@@ -1,6 +1,6 @@
 # Stroke
 
-Stroke is a simple native macOS first-draft text editor, built with SwiftUI and AppKit. It never deletes text: selecting text and pressing Backspace or Delete marks it with strikethrough. Saving writes plain UTF-8 text with struck-through passages omitted.
+Stroke is a simple native macOS fork of [David Merfield's](https://github.com/davidmerfield/Stroke) first-draft text editor, built with SwiftUI and AppKit. It never deletes text: selecting text and pressing Backspace or Delete marks it with strikethrough. Saving writes plain UTF-8 text with struck-through passages omitted.
 
 ## Build and run
 
