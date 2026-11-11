@@ -26,7 +26,14 @@ final class EditorModel: ObservableObject {
 
         do {
             let contents = try String(contentsOf: url, encoding: .utf8)
-            textView?.textStorage?.setAttributedString(NSAttributedString(string: contents))
+            let font = editorFont
+            let attributes: [NSAttributedString.Key: Any] = [
+                .font: font,
+                .foregroundColor: NSColor(calibratedRed: 0.13, green: 0.13, blue: 0.13, alpha: 1)
+            ]
+            textView?.textStorage?.setAttributedString(NSAttributedString(string: contents, attributes: attributes))
+            textView?.font = font
+            textView?.typingAttributes = attributes
             textView?.setSelectedRange(NSRange(location: 0, length: 0))
             currentFileURL = url
             isEdited = false
@@ -67,6 +74,10 @@ final class EditorModel: ObservableObject {
         let editMarker = isEdited ? " — Edited" : ""
         textView?.window?.title = "\(baseName) — \(wordCount) words\(editMarker)"
         textView?.window?.isDocumentEdited = isEdited
+    }
+
+    private var editorFont: NSFont {
+        NSFont.monospacedSystemFont(ofSize: 15, weight: .regular)
     }
 
     private func wordCount(in text: String) -> Int {
